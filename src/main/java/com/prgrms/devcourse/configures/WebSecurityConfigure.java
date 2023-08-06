@@ -1,12 +1,16 @@
 package com.prgrms.devcourse.configures;
 
 
+import jakarta.servlet.UnavailableException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDecisionManager;
+import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.expression.SecurityExpressionHandler;
+import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.authentication.AuthenticationTrustResolverImpl;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -19,11 +23,21 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.expression.WebExpressionVoter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 public class WebSecurityConfigure {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
+    private final OddAdminVoterImpl oddAdminVoter;
+
+    public WebSecurityConfigure(OddAdminVoterImpl oddAdminVoter) {
+        this.oddAdminVoter = oddAdminVoter;
+    }
 
     //스프링 시큐리티 필터 채인을 태우지 않겠다는 의미
     // 불필요한 서버 자원 낭비를 방지
@@ -41,6 +55,14 @@ public class WebSecurityConfigure {
     }
 
     @Bean
+    public AccessDecisionManager accessDecisionManager() {
+        List<AccessDecisionVoter<?>> voters = new ArrayList<>();
+        voters.add(new WebExpressionVoter());
+        voters.add(new OddAdminVoter(new AntPathRequestMatcher("/admin"), oddAdminVoter));
+        return new UnanimousBased(voters);
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .rememberMe(r -> r.rememberMeParameter("remember-me").tokenValiditySeconds(300)
@@ -49,6 +71,7 @@ public class WebSecurityConfigure {
                         .requestMatchers("/me").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/admin")
                         .access("isFullyAuthenticated() and hasRole('ADMIN')")
+                        .accessDecisionManager(accessDecisionManager())
                         .anyRequest().permitAll()
                 )
                 .formLogin(login -> login.defaultSuccessUrl("/")

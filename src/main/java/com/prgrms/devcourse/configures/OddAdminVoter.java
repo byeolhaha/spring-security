@@ -1,14 +1,24 @@
 package com.prgrms.devcourse.configures;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.FilterInvocation;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.util.Collection;
 
-public class OddAdminVoter implements AccessDecisionVoter {
+public class OddAdminVoter implements AccessDecisionVoter<FilterInvocation> {
 
-    OddAdminVoterImpl oddAdminVoter = new OddAdminVoterImpl();
+
+    private final RequestMatcher requestMatcher;
+    private final OddAdminVoterImpl oddAdminVoter;
+
+    public OddAdminVoter(RequestMatcher requestMatcher, OddAdminVoterImpl oddAdminVoter) {
+        this.requestMatcher = requestMatcher;
+        this.oddAdminVoter = oddAdminVoter;
+    }
 
     @Override
     public boolean supports(ConfigAttribute attribute) {
@@ -16,18 +26,27 @@ public class OddAdminVoter implements AccessDecisionVoter {
     }
 
     @Override
-    public int vote(Authentication authentication, Object object, Collection collection) {
+    public int vote(Authentication authentication, FilterInvocation fi, Collection<ConfigAttribute> attributes) {
+        HttpServletRequest request = fi.getRequest();
+        if (!requiresAuthorization(request)) {
+            return ACCESS_GRANTED;
+        }
         boolean isOddAdmin = oddAdminVoter.isOddAdmin(authentication);
 
         if (isOddAdmin) {
             return ACCESS_GRANTED;  // Grant access to odd admin users
-        } else {
-            return ACCESS_DENIED;   // Deny access to other users
         }
+        return ACCESS_DENIED;   // Deny access to other users
+
     }
+
+    private boolean requiresAuthorization(HttpServletRequest httpServletRequest) {
+        return requestMatcher.matches(httpServletRequest);
+    }
+
 
     @Override
     public boolean supports(Class clazz) {
-        return true;
+        return FilterInvocation.class.isAssignableFrom(clazz);
     }
 }

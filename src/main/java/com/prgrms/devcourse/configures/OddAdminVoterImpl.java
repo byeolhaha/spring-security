@@ -1,5 +1,6 @@
 package com.prgrms.devcourse.configures;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
@@ -9,7 +10,7 @@ import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.math.NumberUtils.toInt;
 
-@Component
+@Configuration
 public class OddAdminVoterImpl {
 
     static final Pattern PATTERN = Pattern.compile("[0-9]+$");
