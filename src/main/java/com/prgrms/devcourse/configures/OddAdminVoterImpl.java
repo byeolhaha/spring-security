@@ -2,24 +2,20 @@ package com.prgrms.devcourse.configures;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.web.FilterInvocation;
-import org.springframework.security.web.access.expression.WebSecurityExpressionRoot;
+import org.springframework.stereotype.Component;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.math.NumberUtils.toInt;
 
-public class CustomWebSecurityExpressionRoot extends WebSecurityExpressionRoot {
+@Component
+public class OddAdminVoterImpl {
 
     static final Pattern PATTERN = Pattern.compile("[0-9]+$");
 
-    public CustomWebSecurityExpressionRoot(Authentication a, FilterInvocation fi) {
-        super(a, fi);
-    }
-
-    public boolean isOddAdmin() {
-        User user = (User) getAuthentication().getPrincipal();
+    public boolean isOddAdmin(Authentication authentication){
+        User user = (User) authentication.getPrincipal();
         String name = user.getUsername();
         Matcher matcher = PATTERN.matcher(name); // 끝에 숫자가 있다면
 
@@ -30,5 +26,4 @@ public class CustomWebSecurityExpressionRoot extends WebSecurityExpressionRoot {
         }
         return false;
     }
-
 }

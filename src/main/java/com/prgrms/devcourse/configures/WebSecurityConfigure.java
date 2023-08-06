@@ -48,14 +48,10 @@ public class WebSecurityConfigure {
                 .authorizeRequests(authorize -> authorize
                         .requestMatchers("/me").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/admin")
-                        .access("isFullyAuthenticated() and hasRole('ADMIN') and oddAdmin")
+                        .access("isFullyAuthenticated() and hasRole('ADMIN')")
                         .anyRequest().permitAll()
-                        .expressionHandler(securityExpressionHandler())
                 )
                 .formLogin(login -> login.defaultSuccessUrl("/")
-                       // .loginPage("/my-login")
-                       // .usernameParameter("my-username")
-                       // .passwordParameter("my-password")
                         .permitAll())
                 .logout(logout -> logout
                         .logoutSuccessUrl("/")
