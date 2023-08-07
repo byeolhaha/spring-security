@@ -32,7 +32,11 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.springframework.security.authorization.AuthenticatedAuthorizationManager.fullyAuthenticated;
+import static org.springframework.security.authorization.AuthorityAuthorizationManager.hasRole;
 import static org.springframework.security.config.Customizer.withDefaults;
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+import static org.springframework.security.authorization.AuthorizationManagers.allOf;
 
 @Configuration
 public class WebSecurityConfigure {
@@ -69,7 +73,7 @@ public class WebSecurityConfigure {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring()
-                .requestMatchers("assects/**");
+                .requestMatchers(antMatcher(("/assects/**")),antMatcher("/h2-console/**"));
     }
 
     public SecurityExpressionHandler<FilterInvocation> securityExpressionHandler() {
@@ -92,11 +96,11 @@ public class WebSecurityConfigure {
         http
                 .rememberMe(r -> r.rememberMeParameter("remember-me").tokenValiditySeconds(300)
                         .alwaysRemember(false))
-                .authorizeRequests(authorize -> authorize
-                        .requestMatchers("/me", "/asyncHello", "/someMethod").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/admin")
-                        .access("isFullyAuthenticated() and hasRole('ADMIN')")
-                        .accessDecisionManager(accessDecisionManager())
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(antMatcher("/me"), antMatcher("/asyncHello"), antMatcher("/someMethod")).hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(antMatcher("/admin"))
+                        .access(allOf(hasRole("ADMIN"), fullyAuthenticated()))//"isFullyAuthenticated() and hasRole('ADMIN')")
+                        //.accessDecisionManager(accessDecisionManager())
                         .anyRequest().permitAll()
                 )
                 .formLogin(login -> login.defaultSuccessUrl("/")
@@ -130,7 +134,6 @@ public class WebSecurityConfigure {
             response.getWriter().flush();
             response.getWriter().close();
         };
-
 
     }
 
