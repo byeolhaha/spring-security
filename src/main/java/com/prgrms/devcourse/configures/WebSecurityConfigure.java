@@ -29,6 +29,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 @Configuration
 public class WebSecurityConfigure {
 
@@ -87,8 +89,8 @@ public class WebSecurityConfigure {
                 .exceptionHandling(v -> v.accessDeniedHandler(accessDeniedHandler()))
                 .sessionManagement(s->s.sessionFixation().changeSessionId().sessionCreationPolicy(
                         SessionCreationPolicy.IF_REQUIRED).invalidSessionUrl("/").maximumSessions(1).// 최대로 로그인 가능한 세션 개수
-                        maxSessionsPreventsLogin(false));// 최대 도달했을 때 로그인을 막을 것인가? 기본값 = false , true 맥시멈 새션에 도달하면 새로운 로그인을 할 수 없다
-
+                        maxSessionsPreventsLogin(false))// 최대 도달했을 때 로그인을 막을 것인가? 기본값 = false , true 맥시멈 새션에 도달하면 새로운 로그인을 할 수 없다
+                .httpBasic(withDefaults());
         return http.build();
     }
 
