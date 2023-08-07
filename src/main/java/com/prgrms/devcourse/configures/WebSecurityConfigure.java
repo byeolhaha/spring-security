@@ -4,8 +4,11 @@ package com.prgrms.devcourse.configures;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.expression.SecurityExpressionHandler;
@@ -19,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -36,10 +40,28 @@ public class WebSecurityConfigure {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final OddAdminVoterImpl oddAdminVoter;
 
-     public WebSecurityConfigure(OddAdminVoterImpl oddAdminVoter) {
-       SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-      this.oddAdminVoter = oddAdminVoter;
-     }
+
+    public WebSecurityConfigure(OddAdminVoterImpl oddAdminVoter) {
+        //SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL); 권장되지 않는 방법
+        this.oddAdminVoter = oddAdminVoter;
+    }
+
+    @Bean
+    @Qualifier("myAsyncTaskExecutor")
+    public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(5);
+        executor.setThreadNamePrefix("my-executor-");
+        return executor;
+    }
+
+    @Bean
+    public DelegatingSecurityContextAsyncTaskExecutor taskExecutor(
+            @Qualifier("myAsyncTaskExecutor") AsyncTaskExecutor delegate
+    ){
+        return new DelegatingSecurityContextAsyncTaskExecutor(delegate);
+    }
 
 
     //스프링 시큐리티 필터 채인을 태우지 않겠다는 의미
@@ -71,7 +93,7 @@ public class WebSecurityConfigure {
                 .rememberMe(r -> r.rememberMeParameter("remember-me").tokenValiditySeconds(300)
                         .alwaysRemember(false))
                 .authorizeRequests(authorize -> authorize
-                        .requestMatchers("/me","/asyncHello","/someMethod").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/me", "/asyncHello", "/someMethod").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/admin")
                         .access("isFullyAuthenticated() and hasRole('ADMIN')")
                         .accessDecisionManager(accessDecisionManager())
@@ -88,7 +110,7 @@ public class WebSecurityConfigure {
                 .anonymous(v -> v.principal("thisIsAnonymousUser")
                         .authorities("ROLE_ANONYMOUS", "ROLE_UNKOWN"))
                 .exceptionHandling(v -> v.accessDeniedHandler(accessDeniedHandler()))
-                .sessionManagement(s->s.sessionFixation().changeSessionId().sessionCreationPolicy(
+                .sessionManagement(s -> s.sessionFixation().changeSessionId().sessionCreationPolicy(
                         SessionCreationPolicy.IF_REQUIRED).invalidSessionUrl("/").maximumSessions(1).// 최대로 로그인 가능한 세션 개수
                         maxSessionsPreventsLogin(false))// 최대 도달했을 때 로그인을 막을 것인가? 기본값 = false , true 맥시멈 새션에 도달하면 새로운 로그인을 할 수 없다
                 .httpBasic(withDefaults());
