@@ -1,7 +1,6 @@
 package com.prgrms.devcourse.configures;
 
 
-import jakarta.servlet.UnavailableException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +40,12 @@ public class WebSecurityConfigure {
         this.oddAdminVoter = oddAdminVoter;
     }
 
+    // public WebSecurityConfigure(OddAdminVoterImpl oddAdminVoter) {
+  //     SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+  //     this.oddAdminVoter = oddAdminVoter;
+  // }
+
+
     //스프링 시큐리티 필터 채인을 태우지 않겠다는 의미
     // 불필요한 서버 자원 낭비를 방지
     @Bean
@@ -70,7 +75,7 @@ public class WebSecurityConfigure {
                 .rememberMe(r -> r.rememberMeParameter("remember-me").tokenValiditySeconds(300)
                         .alwaysRemember(false))
                 .authorizeRequests(authorize -> authorize
-                        .requestMatchers("/me").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/me","/asyncHello","/someMethod").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/admin")
                         .access("isFullyAuthenticated() and hasRole('ADMIN')")
                         .accessDecisionManager(accessDecisionManager())
