@@ -36,14 +36,10 @@ public class WebSecurityConfigure {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final OddAdminVoterImpl oddAdminVoter;
 
-    public WebSecurityConfigure(OddAdminVoterImpl oddAdminVoter) {
-        this.oddAdminVoter = oddAdminVoter;
-    }
-
-    // public WebSecurityConfigure(OddAdminVoterImpl oddAdminVoter) {
-  //     SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-  //     this.oddAdminVoter = oddAdminVoter;
-  // }
+     public WebSecurityConfigure(OddAdminVoterImpl oddAdminVoter) {
+       SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+      this.oddAdminVoter = oddAdminVoter;
+     }
 
 
     //스프링 시큐리티 필터 채인을 태우지 않겠다는 의미
