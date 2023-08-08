@@ -21,6 +21,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.security.web.FilterInvocation;
@@ -29,6 +32,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +55,39 @@ public class WebSecurityConfigure {
     }
 
     @Bean
+    public UserDetailsService userDetailsService(DataSource dataSource) {
+        JdbcDaoImpl jdbcDao = new JdbcDaoImpl();
+        jdbcDao.setDataSource(dataSource);
+        jdbcDao.setEnableAuthorities(false);
+        jdbcDao.setEnableGroups(true);
+        jdbcDao.setUsersByUsernameQuery(
+                "SELECT " +
+                        "login_id, passwd, true " +
+                        "FROM " +
+                        "USERS " +
+                        "WHERE " +
+                        "login_id = ?"
+        );
+
+        jdbcDao.setGroupAuthoritiesByUsernameQuery(
+                "SELECT " +
+                        "u.login_id, g.name, p.name " +
+                        "FROM " +
+                        "users u JOIN groups g ON u.group_id = g.id " +
+                        "LEFT JOIN group_permission gp ON g.id = gp.group_id " +
+                        "JOIN permissions p ON p.id = gp.permission_id " +
+                        "WHERE " +
+                        "u.login_id = ?"
+        );
+        return jdbcDao;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
     @Qualifier("myAsyncTaskExecutor")
     public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -63,7 +100,7 @@ public class WebSecurityConfigure {
     @Bean
     public DelegatingSecurityContextAsyncTaskExecutor taskExecutor(
             @Qualifier("myAsyncTaskExecutor") AsyncTaskExecutor delegate
-    ){
+    ) {
         return new DelegatingSecurityContextAsyncTaskExecutor(delegate);
     }
 
@@ -73,7 +110,7 @@ public class WebSecurityConfigure {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring()
-                .requestMatchers(antMatcher(("/assects/**")),antMatcher("/h2-console/**"));
+                .requestMatchers(antMatcher(("/assects/**")), antMatcher("/h2-console/**"));
     }
 
     public SecurityExpressionHandler<FilterInvocation> securityExpressionHandler() {
@@ -137,22 +174,22 @@ public class WebSecurityConfigure {
 
     }
 
-    @Bean
-    UserDetailsService userDetailsService() {
-        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-        manager.createUser(User.withUsername("user")
-                .password("{noop}user123")
-                .roles("USER")
-                .build());
-        manager.createUser(User.withUsername("admin01")
-                .password("{noop}admin123")
-                .roles("ADMIN")
-                .build());
-        manager.createUser(User.withUsername("admin02")
-                .password("{noop}admin123")
-                .roles("ADMIN")
-                .build());
-        return manager;
-    }
+    // @Bean
+    // UserDetailsService userDetailsService() {
+    //     InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+    //     manager.createUser(User.withUsername("user")
+    //             .password("{noop}user123")
+    //             .roles("USER")
+    //             .build());
+    //     manager.createUser(User.withUsername("admin01")
+    //             .password("{noop}admin123")
+    //             .roles("ADMIN")
+    //             .build());
+    //     manager.createUser(User.withUsername("admin02")
+    //             .password("{noop}admin123")
+    //             .roles("ADMIN")
+    //             .build());
+    //     return manager;
+    // }
 
 }
