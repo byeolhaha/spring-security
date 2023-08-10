@@ -8,8 +8,6 @@ import org.springframework.security.web.access.expression.WebSecurityExpressionR
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.apache.commons.lang3.math.NumberUtils.toInt;
-
 public class CustomWebSecurityExpressionRoot extends WebSecurityExpressionRoot {
 
     static final Pattern PATTERN = Pattern.compile("[0-9]+$");
@@ -25,7 +23,7 @@ public class CustomWebSecurityExpressionRoot extends WebSecurityExpressionRoot {
 
         // 숫자로 반혼하기
         if(matcher.find()) {
-            int number = toInt(matcher.group(),0);
+            int number = Integer.parseInt(matcher.group());
             return number % 2 ==1;
         }
         return false;

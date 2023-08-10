@@ -1,4 +1,4 @@
-package com.prgrms.devcourse.configures.service;
+package com.prgrms.devcourse.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
