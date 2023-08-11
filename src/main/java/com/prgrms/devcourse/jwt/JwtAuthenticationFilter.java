@@ -56,8 +56,8 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
                     List<GrantedAuthority> authorities = getAuthorities(claims);
 
                     if (isNotEmpty(username) && authorities.size() > 0) {
-                        UsernamePasswordAuthenticationToken authenticationToken =
-                                new UsernamePasswordAuthenticationToken(username, null, authorities);
+                        JwtAuthenticationToken authenticationToken =
+                                new JwtAuthenticationToken(new JwtAuthentication(token,username), null, authorities);
                         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     }
